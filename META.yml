@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Sub-SingletonBuilder
-version:             0.01
+version:             0.02
 abstract:            a singleton subroutine builder
 license:             ~
 author:              

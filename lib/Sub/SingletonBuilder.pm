@@ -6,18 +6,23 @@ use warnings;
 use base qw/Exporter/;
 
 our @EXPORT = qw/build_singleton/;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub build_singleton {
-    my $ctor = shift;
+    my ($ctor, $dtor) = @_;
     my $instance = undef;
-    sub {
-        if (@_) {
-            $instance = $_[0];
-        } else {
-            $instance ||= $ctor->();
-        }
+    my $getter = sub {
+        $instance ||= $ctor->();
     };
+    wantarray && $dtor
+        ? (
+            $getter,
+            sub {
+                $dtor->($instance) if $instance;
+                $instance = undef;
+            },
+        )
+            : $getter;
 }
 
 1;
@@ -31,11 +36,22 @@ Sub::SingletonBuilder - a singleton subroutine builder
 
   use Sub::SingletonBuilder;
   
+  # simple example
   *dbh = build_singleton(sub {
       DBI->connect(...);
   });
-  
   dbh()->execute(...);
+  
+  # declare explicit destructor as well
+  (*dbh, *dbh_disconnect) = build_singleton(
+      sub {
+          DBI->connect(...);
+      },
+      sub {
+          my $dbh = shift;
+          $dbh->disconnect();
+      },
+  );
 
 =head1 AUTHOR
 
